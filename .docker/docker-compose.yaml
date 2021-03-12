@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  
+  kafka:
+    image: 'vectorized/redpanda:v21.3.3'
+    command: [redpanda, start, --kafka-addr, "PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:29092", --advertise-kafka-addr, "PLAINTEXT://kafka:9092,OUTSIDE://localhost:29092"]
+    ports:
+      - 9092:9092
+      - 29092:29092
+      - 9644:9644
+    volumes:
+      - "./configuration/redpanda.yaml:/etc/redpanda/redpanda.yaml"
+      - "redpanda-data:/var/lib/redpanda/data"
+
+  postgres:
+    image: postgres:13.2
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      PGDATA: /data/postgres
+    volumes:
+       - postgres-data:/data/postgres
+    ports:
+      - "5432:5432"
+
+volumes:
+  redpanda-data:
+  postgres-data:
+
+networks:
+  default:
+    driver: bridge

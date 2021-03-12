@@ -1,0 +1,29 @@
+{
+  "name": "challenge",
+  "version": "1.0.0",
+  "description": "Upflow coding challenge",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node build/src/server.js",
+    "build": "tsc",
+    "dev": "nodemon"
+  },
+  "keywords": [],
+  "author": "Jani Stricelj",
+  "license": "ISC",
+  "dependencies": {
+    "class-transformer": "^0.4.0",
+    "class-transformer-validator": "^0.9.1",
+    "class-validator": "^0.13.1",
+    "express": "^4.17.1",
+    "express-async-handler": "^1.1.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.11",
+    "@types/node": "^14.14.32",
+    "nodemon": "^2.0.7",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.3"
+  }
+}
