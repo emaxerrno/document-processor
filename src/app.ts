@@ -1,4 +1,5 @@
 import express from "express";
+import errorHandlingMiddleware from "./infrastructure/middleware/errorHandling.middleware";
 
 class App {
 	public readonly app: express.Application;
@@ -13,6 +14,7 @@ class App {
 
 	public async initialize() {
 		this.initializeMiddlewares();
+		this.initializeErrorHandling();
 	}
 
 	public listen() {
@@ -24,6 +26,10 @@ class App {
 	private initializeMiddlewares() {
 		this.app.use(express.json());
 		this.app.use(express.urlencoded({ extended: true }));
+	}
+
+	private initializeErrorHandling() {
+		this.app.use(errorHandlingMiddleware());
 	}
 }
 
