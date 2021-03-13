@@ -1,9 +1,9 @@
 import { Repository, Sequelize } from "sequelize-typescript";
-import { databaseConfig, DatabaseEnvironment } from "./config";
+import { databaseConfig } from "./database.config";
+import { environment as env } from "./../environment/environment";
 import { Document } from "../../domain/documents/document.model";
 import { DocumentReference } from "../../domain/documents/documentReference.model";
 
-const env: DatabaseEnvironment = (process.env["NODE_ENV"] as DatabaseEnvironment) || "development";
 const sequelize = new Sequelize({
   database: databaseConfig[env].database,
 	username: databaseConfig[env].username,
@@ -28,6 +28,7 @@ class Database {
 	public getDocumentReferencesRepository(): Repository<DocumentReference> {
 		return sequelize.getRepository(DocumentReference);
 	}
+
 };
 
 export default new Database(sequelize);

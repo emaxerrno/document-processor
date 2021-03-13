@@ -1,7 +1,5 @@
 import { Dialect } from "sequelize/types";
 
-export type DatabaseEnvironment = 'development' | 'test' | 'production';
-
 interface DatabaseConfig {
 	development: DatabaseConfigOption,
 	test: DatabaseConfigOption,
