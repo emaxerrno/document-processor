@@ -1,5 +1,7 @@
-import { Sequelize } from "sequelize-typescript";
+import { Repository, Sequelize } from "sequelize-typescript";
 import { databaseConfig, DatabaseEnvironment } from "./config";
+import { Document } from "../../domain/documents/document.model";
+import { DocumentReference } from "../../domain/documents/documentReference.model";
 
 const env: DatabaseEnvironment = (process.env["NODE_ENV"] as DatabaseEnvironment) || "development";
 const sequelize = new Sequelize({
@@ -8,6 +10,7 @@ const sequelize = new Sequelize({
 	password: databaseConfig[env].password,
 	host: databaseConfig[env].host,
 	dialect: databaseConfig[env].dialect,
+  models: [Document, DocumentReference],
   repositoryMode: true,
 });
 
@@ -16,6 +19,14 @@ class Database {
 
 	constructor(sequelize: Sequelize) {
 		this.sequelize = sequelize;
+	}
+
+	public getDocumentRepository(): Repository<Document> {
+		return sequelize.getRepository(Document);
+	}
+
+	public getDocumentReferencesRepository(): Repository<DocumentReference> {
+		return sequelize.getRepository(DocumentReference);
 	}
 };
 
