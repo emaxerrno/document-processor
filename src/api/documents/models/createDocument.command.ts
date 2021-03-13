@@ -1,6 +1,6 @@
 import { IsString, IsUrl } from "class-validator";
 
-export default class CreateDocument
+export class CreateDocument
 {
 	constructor(url: string) {
 		this.url = url;
