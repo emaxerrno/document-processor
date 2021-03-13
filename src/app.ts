@@ -1,5 +1,6 @@
 import express from "express";
 import errorHandlingMiddleware from "./infrastructure/middleware/errorHandling.middleware";
+import notFoundRoute from "./infrastructure/routes/notFound.route";
 
 class App {
 	public readonly app: express.Application;
@@ -14,6 +15,7 @@ class App {
 
 	public async initialize() {
 		this.initializeMiddlewares();
+		this.initializeRoutes();
 		this.initializeErrorHandling();
 	}
 
@@ -26,6 +28,10 @@ class App {
 	private initializeMiddlewares() {
 		this.app.use(express.json());
 		this.app.use(express.urlencoded({ extended: true }));
+	}
+
+	private initializeRoutes() {
+		this.app.use(notFoundRoute());
 	}
 
 	private initializeErrorHandling() {
