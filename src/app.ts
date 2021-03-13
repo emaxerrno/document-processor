@@ -1,6 +1,7 @@
 import express from "express";
 import errorHandlingMiddleware from "./infrastructure/middleware/errorHandling.middleware";
 import notFoundRoute from "./infrastructure/routes/notFound.route";
+import Routes from "./api/routes";
 
 class App {
 	public readonly app: express.Application;
@@ -31,6 +32,7 @@ class App {
 	}
 
 	private initializeRoutes() {
+		this.app.use('/api/v1', Routes);
 		this.app.use(notFoundRoute());
 	}
 
