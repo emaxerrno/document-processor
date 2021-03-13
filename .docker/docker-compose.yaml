@@ -18,9 +18,10 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_PASSWORD:-challenge_js}
       PGDATA: /data/postgres
     volumes:
-       - postgres-data:/data/postgres
+      - postgres-data:/data/postgres
     ports:
       - "5432:5432"
 
