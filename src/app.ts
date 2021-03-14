@@ -3,6 +3,7 @@ import DB from './infrastructure/database/database';
 import errorHandlingMiddleware from "./infrastructure/middleware/errorHandling.middleware";
 import notFoundRoute from "./infrastructure/routes/notFound.route";
 import Routes from "./api/routes";
+import StaticRoutes from "./infrastructure/routes/static.route";
 import Broker from "./infrastructure/broker/broker";
 import { Server } from "node:http";
 
@@ -48,6 +49,7 @@ class App {
 
 	private initializeRoutes(): void {
 		this.app.use('/api/v1', Routes);
+		this.app.use('/public', StaticRoutes)
 		this.app.use(notFoundRoute());
 	}
 
