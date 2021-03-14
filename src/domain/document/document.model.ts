@@ -1,5 +1,5 @@
 import { Model, Table, PrimaryKey, AutoIncrement, HasMany, Column, Unique } from 'sequelize-typescript';
-import { DocumentReference } from './documentReference.model';
+import { DocumentReference } from '../documentReference/documentReference.model';
 
 @Table
 export class Document extends Model {
@@ -11,9 +11,11 @@ export class Document extends Model {
 
 	@Unique(true)
 	@Column
+	hash!: string;
+
+	@Column
 	path!: string;
 
-	@Unique(true)
 	@Column
 	thumbnailPath!: string;
 

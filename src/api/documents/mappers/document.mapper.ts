@@ -1,4 +1,4 @@
-import { Document } from "../../../domain/documents/document.model";
+import { Document } from "../../../domain/document/document.model";
 import { IDocumentDto } from "../models/document.dto";
 
 export class DocumentMapper {

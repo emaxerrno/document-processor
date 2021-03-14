@@ -1,8 +1,8 @@
 import { Repository, Sequelize } from "sequelize-typescript";
 import { databaseConfig } from "./database.config";
 import { environment as env } from "./../environment/environment";
-import { Document } from "../../domain/documents/document.model";
-import { DocumentReference } from "../../domain/documents/documentReference.model";
+import { Document } from "../../domain/document/document.model";
+import { DocumentReference } from "../../domain/documentReference/documentReference.model";
 
 const sequelize = new Sequelize({
   database: databaseConfig[env].database,

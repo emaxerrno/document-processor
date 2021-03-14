@@ -1,11 +1,11 @@
 import database from "../../infrastructure/database/database";
 import broker from "../../infrastructure/broker/broker";
-import { DocumentService } from "../../domain/documents/document.service";
+import { DocumentService } from "../../domain/document/document.service";
 import { CreateDocument } from "./models/createDocument.command";
 import { IDocumentDto } from "./models/document.dto";
 import { DocumentMapper } from "./mappers/document.mapper";
-import { DocumentReferenceService } from "../../domain/documents/documentReference.service";
-import { DocumentQueueService } from "../../domain/documents/document.queue.service";
+import { DocumentReferenceService } from "../../domain/documentReference/documentReference.service";
+import { DocumentQueueService } from "../../domain/document/document.queue.service";
 import { DocumentRequested } from "../../events/documents/documentRequested.event";
 
 export class DocumentsController
@@ -27,12 +27,12 @@ export class DocumentsController
 		}
 
 		// TODO: use transactional outbox pattern instead of sending directly to broker
-		// - in this case this would mean:
-		// 	- add a new record to DatabaseReference
+		// - in this case this would mean (under single transaction or unit of work):
+		// 	- add a new DocumentReference record
 		//	- add a new outbox event
 
 		// send to queue
-		await this.documentQueueService.create(
+		await this.documentQueueService.sendDocumentRequestedEvent(
 			new DocumentRequested(body.url)
 		)
 	}

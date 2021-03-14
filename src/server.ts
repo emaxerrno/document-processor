@@ -4,7 +4,7 @@ class Main {
 
 	private readonly app = new App();
 
-	async initialize() {
+	async initialize(): Promise<void> {
 		await this.app.initialize();
 		this.app.listen();
 	}

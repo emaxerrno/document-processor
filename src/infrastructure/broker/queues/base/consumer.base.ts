@@ -9,6 +9,8 @@ export abstract class QueueConsumerBase<T> {
 
 	public async initialize(): Promise<void> {
 		await this.consumer.subscribe({ topic: this.topic });
+
+		// only kickstart consumer (do not await here)
 		this.consumer.run({
 			partitionsConsumedConcurrently: this.concurrency,
 			eachMessage: async (payload: EachMessagePayload) => {
