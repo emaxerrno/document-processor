@@ -1,5 +1,5 @@
 import { ConsumerConfig, Kafka } from 'kafkajs';
-import { kafkaConfig } from "./kafka.config";
+import { kafkaConfig } from "../config/kafka.config";
 import { environment as env, environment, devEnvironment } from "./../environment/environment";
 import { UuidUtils } from '../utils/uuid.utils';
 import { DocumentRequestedProducer } from './queues/documentRequestedQueue/documentRequested.producer';

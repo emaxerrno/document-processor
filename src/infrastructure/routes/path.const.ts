@@ -1,5 +1,5 @@
 import path from "path";
-import { pathConfig } from "./path.config";
+import { pathConfig } from "../config/path.config";
 import { environment as env } from "./../environment/environment";
 
 export const rootPath: string = pathConfig[env].rootFolder;

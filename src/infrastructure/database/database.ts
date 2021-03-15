@@ -1,5 +1,5 @@
 import { Repository, Sequelize } from "sequelize-typescript";
-import { databaseConfig } from "./database.config";
+import { databaseConfig } from "../config/database.config";
 import { environment as env } from "./../environment/environment";
 import { Document } from "../../domain/document/document.model";
 import { DocumentReference } from "../../domain/documentReference/documentReference.model";
