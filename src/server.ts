@@ -1,10 +1,15 @@
 import App from './app';
 
-const app = new App();
+class Main {
 
-async function main() {
-	await app.initialize();
-  app.listen();
+	private readonly app = new App();
+
+	async initialize(): Promise<void> {
+		await this.app.initialize();
+		this.app.listen();
+	}
+
 }
 
-main();
+const main = new Main();
+main.initialize();
