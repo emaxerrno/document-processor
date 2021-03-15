@@ -1,0 +1,9 @@
+.git
+.gitignore
+LICENSE
+README.md
+build
+node_modules/*
+package-lock.json
+.docker/
+temp

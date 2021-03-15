@@ -1,8 +1,8 @@
 node_modules
-temp
 build
 npm-debug.log
 .env
 .DS_Store
-!public/**/.gitkeep
-public/**/*
+!**/**/.gitkeep
+public
+temp
