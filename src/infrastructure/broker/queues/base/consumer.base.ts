@@ -25,7 +25,7 @@ export abstract class QueueConsumerBase<T> {
 		.catch(error => console.error(`Consumer (${this.topic}) error.`, error))
 	}
 
-	protected abstract messageProcessor(message: T): Promise<void>;
-
 	protected abstract get topic(): string;
+
+	protected abstract messageProcessor(message: T): Promise<void>;
 }

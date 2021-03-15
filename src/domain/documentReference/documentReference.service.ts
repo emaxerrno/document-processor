@@ -1,5 +1,5 @@
 import { Repository } from "sequelize-typescript";
-import { FindOptions } from "sequelize/types";
+import { FindOptions, Transaction } from "sequelize/types";
 import { combineQueryOptions, IQueryOptions } from "../../infrastructure/database/queryOptions.model";
 import { DocumentReference } from "./documentReference.model";
 import { DocumentReferenceProcessingState } from "./documentReferenceProcessingState.enum";
@@ -19,17 +19,44 @@ export class DocumentReferenceService {
 			.findOne(this.defaultFindOptions(url, options));
 	}
 
-	public async getOrCreate(url: string, options?: IQueryOptions): Promise<[documentReference: DocumentReference, created: boolean]> {
+	public async getOrCreate(url: string, options?: IQueryOptions, transaction?: Transaction)
+		: Promise<[documentReference: DocumentReference, created: boolean]> {
+
 		return await this.documentReferenceRepository
 			.findOrCreate({
 				...this.defaultFindOptions(url, options),
-				defaults: this.defaultCreateValues(url)
+				defaults: this.defaultCreateValues(url),
+				transaction: transaction
 			});
 	}
 
-	public async create(url: string): Promise<DocumentReference> {
+	public async create(url: string, transaction?: Transaction): Promise<DocumentReference> {
+		const documentReference = new DocumentReference(this.defaultCreateValues(url));
+
 		return await this.documentReferenceRepository
-			.create(this.defaultCreateValues(url));
+			.create(documentReference, { transaction: transaction });
+	}
+
+	public async finishProcessing(id: number, documentId: number, transaction?: Transaction): Promise<void> {
+		await this.documentReferenceRepository
+			.update({
+				documentId: documentId,
+				state: DocumentReferenceProcessingState.FINISHED
+			}, {
+				where: { id: id },
+				transaction: transaction
+			});
+	}
+
+	public async rejectProcessing(id: number, reason: string, transaction?: Transaction): Promise<void> {
+		await this.documentReferenceRepository
+			.update({
+				state: DocumentReferenceProcessingState.REJECTED,
+				rejectedReason: reason
+			}, {
+				where: { id: id },
+				transaction: transaction
+			});
 	}
 
 	private defaultFindOptions(url: string, options?: IQueryOptions): FindOptions<DocumentReference> {

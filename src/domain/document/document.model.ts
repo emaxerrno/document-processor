@@ -16,10 +16,14 @@ export class Document extends Model {
 	@Column
 	path!: string;
 
+	// TODO add multiple thumbnails support
 	@Column
 	thumbnailPath!: string;
 
-	@HasMany(() => DocumentReference)
+	@HasMany(() => DocumentReference, {
+		onDelete: 'restrict',
+		constraints: true
+	})
 	documentReferences!: DocumentReference[];
 
 }

@@ -68,6 +68,8 @@ export class PdfUtils {
 				data: buffer,
 				cMapUrl: CMAP_URL,
 				cMapPacked: CMAP_PACKED,
+				disableFontFace: true,
+				nativeImageDecoderSupport: 'none',
 			}).promise;
 		}
 		catch (error) {
@@ -75,7 +77,6 @@ export class PdfUtils {
 		}
 
 		const page = await doc.getPage(1);
-
 		const viewport = page.getViewport({ scale: scale });
 
 		// @ts-ignore

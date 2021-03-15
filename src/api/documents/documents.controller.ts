@@ -27,7 +27,8 @@ export class DocumentsController
 		}
 
 		// TODO: use transactional outbox pattern instead of sending directly to broker
-		// - in this case this would mean (under single transaction or unit of work):
+		// OR use kafka connect
+		// - in case of transactional outbox this would mean (under single transaction or unit of work):
 		// 	- add a new DocumentReference record
 		//	- add a new outbox event
 

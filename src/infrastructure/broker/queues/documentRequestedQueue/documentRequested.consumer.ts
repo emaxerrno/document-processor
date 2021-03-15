@@ -1,16 +1,19 @@
 import DB from "../../../database/database"
 import path from "path";
 import { Consumer } from "kafkajs";
+import { Transaction } from "sequelize/types";
 import { documentsPath } from "../../../routes/path.const";
 import { FileUtils } from "../../../utils/file.utils";
 import { UuidUtils } from "../../../utils/uuid.utils";
 import { PdfUtils } from "../../../utils/pdf.utils";
+import { HashUtils } from "../../../utils/hash.utils";
 import { QueueConsumerBase } from "../base/consumer.base";
 import { DocumentRequested } from "../../../../events/documents/documentRequested.event";
 import { documentRequestedQueue } from "./documentRequested.queue";
 import { DocumentReferenceService } from "../../../../domain/documentReference/documentReference.service";
 import { DocumentReferenceProcessingState } from "../../../../domain/documentReference/documentReferenceProcessingState.enum";
 import { InvalidPdfException } from "../../../exceptions/invalidPdf.exception";
+import { DocumentService } from "../../../../domain/document/document.service";
 
 export class DocumentRequestedConsumer extends QueueConsumerBase<DocumentRequested> {
 
@@ -18,9 +21,16 @@ export class DocumentRequestedConsumer extends QueueConsumerBase<DocumentRequest
 		super(consumer, 10);
 	}
 
+	protected get topic(): string {
+		return documentRequestedQueue;
+	}
+
 	protected async messageProcessor(message: DocumentRequested): Promise<void> {
 		console.log(`Consuming message ${message.url}`);
 
+		const documentService = new DocumentService(
+			DB.getDocumentRepository()
+		);
 		const documentReferenceService = new DocumentReferenceService(
 			DB.getDocumentReferencesRepository()
 		);
@@ -41,32 +51,79 @@ export class DocumentRequestedConsumer extends QueueConsumerBase<DocumentRequest
 			const pdfFileResult = await FileUtils.getFile(message.url);
 			const pdfFileResultBuffer = Buffer.from(pdfFileResult);
 
-			// get thumbnail
-			const thumbnailResultBuffer = await PdfUtils.generateThumbnail(pdfFileResultBuffer, 0.3);
+			// get hash
+			const pdfFileHash = HashUtils.generate(pdfFileResultBuffer);
 
-			// save to file
-			await this.saveToFileSystem(pdfFileResultBuffer, thumbnailResultBuffer);
+			// generate potential file names
+			const [pdfFileName, pdfFilePath, thumbnailFileName, thumbnailFilePath] = this.generateFilePaths();
 
-			// save to database
+			let transaction!: Transaction;
+			try {
+				// check if document with hash already exists
+				// - in case it does, add to references
+				const document = await documentService.get(pdfFileHash);
+				if (document) {
+					transaction = await DB.sequelize.transaction();
+					await documentReferenceService.finishProcessing(documentReference.id, document.id, transaction);
+				}
+				else {
+					// get thumbnail
+					const thumbnailResultBuffer = await PdfUtils.generateThumbnail(pdfFileResultBuffer, 0.2);
+
+					// save files
+					await this.saveToFileSystem(pdfFilePath, pdfFileResultBuffer, thumbnailFilePath, thumbnailResultBuffer);
+
+					// save in database
+					transaction = await DB.sequelize.transaction();
+
+					// TODO: can I do this without transaction in sequelize?
+					const newDocument = await documentService.create(pdfFileHash, pdfFileName, thumbnailFileName, transaction);
+					await documentReferenceService.finishProcessing(documentReference.id, newDocument.id, transaction);
+				}
+
+				// here it would be much better to use transactional outbox pattern or kafka connect
+				// - instead of using having an open transaction
+
+				// send to queue
+				// TODO:
+
+				await transaction?.commit();
+			}
+			catch (error) {
+				// rollback transaction
+				await transaction?.rollback();
+
+				// clean any created file
+				try {
+					await FileUtils.removeFile(pdfFilePath);
+				}
+				catch (_) { }
+				try {
+					await FileUtils.removeFile(thumbnailFilePath);
+				}
+				catch (_) { }
+
+				// rethrow
+				throw error;
+			}
 		}
 		catch (error) {
-			// TODO: add to dead-letter queue
+			// TODO: add to retry / dead-letter queue
 
 			if (error instanceof InvalidPdfException && error.message.includes("Invalid PDF structure.")) {
 				return;
 			}
 			// some other error handling?
 
+			// for now only mark as rejected
 			console.error(error);
-			// rethrow or persist failure?
+			await documentReferenceService.rejectProcessing(documentReference.id, `Processing error: ${error.message}`);
 		}
 	}
 
-	protected get topic(): string {
-		return documentRequestedQueue;
-	}
+	private generateFilePaths(): [pdfFileName: string, pdfFilePath: string,
+		thumbnailFileName: string, thumbnailFilePath: string] {
 
-	private async saveToFileSystem(pdfBuffer: Buffer, thumbnailBuffer: Buffer): Promise<void> {
 		var uuid = UuidUtils.getUuid().toString();
 		const pdfFileName = `${uuid}.pdf`;
 		const thumbnailFileName = `${uuid}.thumbnail.png`;
@@ -74,24 +131,14 @@ export class DocumentRequestedConsumer extends QueueConsumerBase<DocumentRequest
 		const pdfFilePath = path.join(documentsPath, pdfFileName);
 		const thumbnailFilePath = path.join(documentsPath, thumbnailFileName);
 
-		try {
-			await FileUtils.writeFile(pdfFilePath, pdfBuffer);
-			await FileUtils.writeFile(thumbnailFilePath, thumbnailBuffer);
-		}
-		catch (error) {
-			// clean any created file
-			try {
-				await FileUtils.removeFile(pdfFilePath);
-			}
-			catch (_) {}
-			try {
-				await FileUtils.removeFile(thumbnailFilePath);
-			}
-			catch (_) {}
+		return [pdfFileName, pdfFilePath, thumbnailFileName, thumbnailFilePath];
+	}
 
-			// rethrow
-			throw error;
-		}
+	private async saveToFileSystem(pdfFilePath: string, pdfBuffer: Buffer,
+		thumbnailFilePath: string, thumbnailBuffer: Buffer): Promise<void> {
+
+		await FileUtils.writeFile(pdfFilePath, pdfBuffer);
+		await FileUtils.writeFile(thumbnailFilePath, thumbnailBuffer);
 	}
 
 }
