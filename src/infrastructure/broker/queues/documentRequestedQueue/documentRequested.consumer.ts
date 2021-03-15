@@ -2,6 +2,7 @@ import DB from "../../../database/database"
 import path from "path";
 import { Consumer } from "kafkajs";
 import { Transaction } from "sequelize/types";
+import broker from "../../broker";
 import { documentsPath } from "../../../routes/path.const";
 import { FileUtils } from "../../../utils/file.utils";
 import { UuidUtils } from "../../../utils/uuid.utils";
@@ -14,6 +15,8 @@ import { DocumentReferenceService } from "../../../../domain/documentReference/d
 import { DocumentReferenceProcessingState } from "../../../../domain/documentReference/documentReferenceProcessingState.enum";
 import { InvalidPdfException } from "../../../exceptions/invalidPdf.exception";
 import { DocumentService } from "../../../../domain/document/document.service";
+import { DocumentQueueService } from "../../../../domain/document/document.queue.service";
+import { DocumentCreated } from "../../../../events/documents/documentCreated.event";
 
 export class DocumentRequestedConsumer extends QueueConsumerBase<DocumentRequested> {
 
@@ -28,12 +31,17 @@ export class DocumentRequestedConsumer extends QueueConsumerBase<DocumentRequest
 	protected async messageProcessor(message: DocumentRequested): Promise<void> {
 		console.log(`Consuming message ${message.url}`);
 
+		// initialize dependencies
 		const documentService = new DocumentService(
 			DB.getDocumentRepository()
 		);
 		const documentReferenceService = new DocumentReferenceService(
 			DB.getDocumentReferencesRepository()
 		);
+		const documentQueueService = new DocumentQueueService(
+			broker.getDocumentRequestedProducer(),
+			broker.getDocumentCreatedProducer()
+		)
 
 		// create document reference (or get in case of retry execution)
 		let documentReference = (await documentReferenceService.getOrCreate(message.url))[0];
@@ -54,40 +62,42 @@ export class DocumentRequestedConsumer extends QueueConsumerBase<DocumentRequest
 			// get hash
 			const pdfFileHash = HashUtils.generate(pdfFileResultBuffer);
 
+			// check if document with hash already exists
+			// - in case it does, add to references
+			const document = await documentService.get(pdfFileHash);
+			if (document) {
+				await documentReferenceService.finishProcessing(documentReference.id, document.id);
+				// since document already exists, we can skip processing
+				return;
+			}
+
 			// generate potential file names
 			const [pdfFileName, pdfFilePath, thumbnailFileName, thumbnailFilePath] = this.generateFilePaths();
 
 			let transaction!: Transaction;
 			try {
-				// check if document with hash already exists
-				// - in case it does, add to references
-				const document = await documentService.get(pdfFileHash);
-				if (document) {
-					transaction = await DB.sequelize.transaction();
-					await documentReferenceService.finishProcessing(documentReference.id, document.id, transaction);
-				}
-				else {
-					// get thumbnail
-					const thumbnailResultBuffer = await PdfUtils.generateThumbnail(pdfFileResultBuffer, 0.2);
+				// get thumbnail
+				const thumbnailResultBuffer = await PdfUtils.generateThumbnail(pdfFileResultBuffer, 0.2);
 
-					// save files
-					await this.saveToFileSystem(pdfFilePath, pdfFileResultBuffer, thumbnailFilePath, thumbnailResultBuffer);
+				// save files
+				await this.saveToFileSystem(pdfFilePath, pdfFileResultBuffer, thumbnailFilePath, thumbnailResultBuffer);
 
-					// save in database
-					transaction = await DB.sequelize.transaction();
+				// save in database
+				transaction = await DB.sequelize.transaction();
 
-					// TODO: can I do this without transaction in sequelize?
-					const newDocument = await documentService.create(pdfFileHash, pdfFileName, thumbnailFileName, transaction);
-					await documentReferenceService.finishProcessing(documentReference.id, newDocument.id, transaction);
-				}
+				// TODO: can I do this without transaction in sequelize?
+				const newDocument = await documentService.create(pdfFileHash, pdfFileName, thumbnailFileName, transaction);
+				await documentReferenceService.finishProcessing(documentReference.id, newDocument.id, transaction);
 
 				// here it would be much better to use transactional outbox pattern or kafka connect
-				// - instead of using having an open transaction
+				// - instead of using having an open transaction and sending directly to broker
+				await documentQueueService.sendDocumentCreatedEvent(newDocument.id, new DocumentCreated({
+					path: newDocument.path,
+					thumbnailPath: newDocument.thumbnailPath
+				}));
 
-				// send to queue
-				// TODO:
-
-				await transaction?.commit();
+				// commit transaction
+				await transaction.commit();
 			}
 			catch (error) {
 				// rollback transaction
@@ -113,7 +123,6 @@ export class DocumentRequestedConsumer extends QueueConsumerBase<DocumentRequest
 			if (error instanceof InvalidPdfException && error.message.includes("Invalid PDF structure.")) {
 				return;
 			}
-			// some other error handling?
 
 			// for now only mark as rejected
 			console.error(error);
