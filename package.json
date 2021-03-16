@@ -20,6 +20,7 @@
     "class-validator": "^0.13.1",
     "express": "^4.17.1",
     "express-async-handler": "^1.1.4",
+    "http-problem-details": "^0.1.5",
     "kafkajs": "^1.15.0",
     "pdfjs-dist": "^2.6.347",
     "pg": "^8.5.1",
