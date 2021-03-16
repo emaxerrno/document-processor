@@ -8,6 +8,7 @@ interface HostConfigOption {
 	baseUrl: string;
 }
 
+// TODO: find a better solution for configs
 export const hostConfig: HostConfig = {
 	development: {
 		baseUrl: "http://localhost:3000"
