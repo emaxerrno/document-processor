@@ -1,6 +1,7 @@
 import { Consumer } from "kafkajs";
-import { QueueConsumerBase } from "../base/consumer.base";
 import { DocumentCreated } from "../../../../events/documents/documentCreated.event";
+import { WebHookUtils } from "../../../utils/webhook.utils";
+import { QueueConsumerBase } from "../base/consumer.base";
 import { documentCreatedQueue } from "./documentCreated.queue";
 
 export class DocumentCreatedConsumer extends QueueConsumerBase<DocumentCreated> {
@@ -13,8 +14,13 @@ export class DocumentCreatedConsumer extends QueueConsumerBase<DocumentCreated> 
 		return documentCreatedQueue;
 	}
 
-	protected async messageProcessor(_message: DocumentCreated): Promise<void> {
-
+	protected async messageProcessor(message: DocumentCreated): Promise<void> {
+		console.log("CREATED PROCESSOR");
+		await WebHookUtils.sendWebHook({
+			type: 'Document',
+			event: 'DocumentCreated',
+			data: message
+		});
 	}
 
 }
