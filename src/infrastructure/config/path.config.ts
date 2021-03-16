@@ -10,6 +10,7 @@ interface PathConfigOption {
 	rootFolder: string;
 }
 
+// TODO: find a better solution for configs
 export const pathConfig: PathConfig = {
 	development: {
 		rootFolder: path.join(__dirname, '..', '..', '..')

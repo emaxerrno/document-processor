@@ -8,6 +8,7 @@ interface HashConfigOption {
 	salt: number;
 }
 
+// TODO: find a better solution for configs
 export const hashConfig: HashConfig = {
 	development: {
 		salt: 0x123,

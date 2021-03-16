@@ -14,6 +14,7 @@ interface DatabaseConfigOption {
 	dialect: Dialect
 }
 
+// TODO: find a better solution for configs
 export const databaseConfig: DatabaseConfig = {
 	development: {
 		username: 'postgres',

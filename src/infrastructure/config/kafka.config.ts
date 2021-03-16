@@ -9,6 +9,7 @@ interface KafkaConfigOption {
 	brokers?: string[];
 }
 
+// TODO: find a better solution for configs
 export const kafkaConfig: KafkaConfig = {
 	development: {
 		clientId: 'challenge-js',

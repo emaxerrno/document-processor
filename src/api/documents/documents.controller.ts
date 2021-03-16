@@ -52,7 +52,8 @@ export class DocumentsController
 
 	private get documentQueueService(): DocumentQueueService {
 		return new DocumentQueueService(
-			broker.getDocumentRequestedProducer()
+			broker.getDocumentRequestedProducer(),
+			broker.getDocumentCreatedProducer()
 		);
 	}
 }
