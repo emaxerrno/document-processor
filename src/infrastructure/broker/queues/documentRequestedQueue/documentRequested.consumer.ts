@@ -72,7 +72,7 @@ export class DocumentRequestedConsumer extends QueueConsumerBase<DocumentRequest
 			}
 
 			// generate potential file names
-			const [pdfFileName, pdfFilePath, thumbnailFileName, thumbnailFilePath] = this.generateFilePaths();
+			const [pdfFileName, pdfFilePath, thumbnailFileName, thumbnailFilePath] = this.generateFileNamesAndPaths();
 
 			let transaction!: Transaction;
 			try {
@@ -118,19 +118,18 @@ export class DocumentRequestedConsumer extends QueueConsumerBase<DocumentRequest
 			}
 		}
 		catch (error) {
-			// TODO: add to retry / dead-letter queue
-
 			if (error instanceof InvalidPdfException && error.message.includes("Invalid PDF structure.")) {
+				await documentReferenceService.rejectProcessing(documentReference.id, `Processing error: ${error.message}`);
 				return;
 			}
 
-			// for now only mark as rejected
 			console.error(error);
-			await documentReferenceService.rejectProcessing(documentReference.id, `Processing error: ${error.message}`);
+			// TODO: add to retry / dead-letter queue
+			throw error;
 		}
 	}
 
-	private generateFilePaths(): [pdfFileName: string, pdfFilePath: string,
+	private generateFileNamesAndPaths(): [pdfFileName: string, pdfFilePath: string,
 		thumbnailFileName: string, thumbnailFilePath: string] {
 
 		var uuid = UuidUtils.getUuid().toString();
