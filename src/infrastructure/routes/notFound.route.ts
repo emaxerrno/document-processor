@@ -1,9 +1,9 @@
 import { NextFunction, Request, RequestHandler, Response } from "express";
+import { NotFoundHttpException } from "../exceptions/notFound.exception";
 
 function notFoundRoute(): RequestHandler {
 	return (_req: Request, _res: Response, next: NextFunction) => {
-		// TODO: error
-		next(new Error("Not found"));
+		next(new NotFoundHttpException("Not found."));
 	}
 }
 
