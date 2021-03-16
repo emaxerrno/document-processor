@@ -3,6 +3,7 @@ import { DocumentCreated } from "../../../../events/documents/documentCreated.ev
 import { WebHookUtils } from "../../../utils/webhook.utils";
 import { QueueConsumerBase } from "../base/consumer.base";
 import { documentCreatedQueue } from "./documentCreated.queue";
+import { PathUtils } from "../../../../infrastructure/utils/path.utils";
 
 export class DocumentCreatedConsumer extends QueueConsumerBase<DocumentCreated> {
 
@@ -19,7 +20,10 @@ export class DocumentCreatedConsumer extends QueueConsumerBase<DocumentCreated> 
 		await WebHookUtils.sendWebHook({
 			type: 'Document',
 			event: 'DocumentCreated',
-			data: message
+			data: {
+				path: PathUtils.generateDocumentFullPath(message.path),
+				thumbnailPath: PathUtils.generateDocumentFullPath(message.thumbnailPath)
+			}
 		});
 	}
 
