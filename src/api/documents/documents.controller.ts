@@ -23,7 +23,6 @@ export class DocumentsController
 
 		// in case reference already exists, processing is not needed
 		if (exists) {
-			// TODO: http exception
 			throw new ConflictHttpException("Document reference already exists.");
 		}
 
