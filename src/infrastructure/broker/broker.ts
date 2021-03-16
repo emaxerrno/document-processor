@@ -15,6 +15,8 @@ const consumerConfigDocumentRequested: ConsumerConfig = { groupId: `${kafkaConfi
 const consumerConfigDocumentCreated: ConsumerConfig = { groupId: `${kafkaConfig[env].clientId}-document-created` };
 
 class Broker {
+	// TODO: add better abstraction
+
 	// document requested
 	private readonly documentRequestedConsumer = new DocumentRequestedConsumer(kafka.consumer(consumerConfigDocumentRequested));
 	private readonly documentRequestedProducer = new DocumentRequestedProducer(kafka.producer());
