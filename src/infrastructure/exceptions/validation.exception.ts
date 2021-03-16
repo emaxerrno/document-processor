@@ -9,5 +9,5 @@ export class ValidationException extends Error
 		this.validationErrors = validationErrors;
 	}
 
-	validationErrors: ValidationError[];
+	public readonly validationErrors: ValidationError[];
 }
