@@ -7,6 +7,7 @@ import { DocumentMapper } from "./mappers/document.mapper";
 import { DocumentReferenceService } from "../../domain/documentReference/documentReference.service";
 import { DocumentQueueService } from "../../domain/document/document.queue.service";
 import { DocumentRequested } from "../../events/documents/documentRequested.event";
+import { ConflictHttpException } from "../../infrastructure/exceptions/conflict.exception";
 
 export class DocumentsController
 {
@@ -23,7 +24,7 @@ export class DocumentsController
 		// in case reference already exists, processing is not needed
 		if (exists) {
 			// TODO: http exception
-			throw new Error("Already exists");
+			throw new ConflictHttpException("Document reference already exists.");
 		}
 
 		// TODO: use transactional outbox pattern instead of sending directly to broker

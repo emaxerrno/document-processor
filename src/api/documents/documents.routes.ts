@@ -19,8 +19,8 @@ router.post("/",
 	asyncHandler(
 		async (req: express.Request, res: express.Response) => {
 			const controller = new DocumentsController();
-			const response = await controller.createDocument(req.body);
-			return res.send(response);
+			await controller.createDocument(req.body);
+			return res.status(202).send();
 		}
 	)
 );
